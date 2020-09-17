@@ -28,6 +28,9 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 //
 // class declaration
 //
@@ -39,19 +42,21 @@
 // This will improve performance in multithreaded jobs.
 
 class cutFlowAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
-   public:
-      explicit cutFlowAnalyzer(const edm::ParameterSet&);
-      ~cutFlowAnalyzer();
+    public:
+        explicit cutFlowAnalyzer(const edm::ParameterSet&);
+        ~cutFlowAnalyzer();
 
-      static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+        static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 
-   private:
-      virtual void beginJob() override;
-      virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
-      virtual void endJob() override;
+    private:
+        virtual void beginJob() override;
+        virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
+        virtual void endJob() override;
 
-      // ----------member data ---------------------------
+        // ----------member data ---------------------------
+
+        edm::EDGetTokenT<edm::TriggerResults> triggerResultsT_;
 };
 
 //
@@ -68,17 +73,18 @@ class cutFlowAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  
 cutFlowAnalyzer::cutFlowAnalyzer(const edm::ParameterSet& iConfig)
 
 {
-   //now do what ever initialization is needed
-   usesResource("TFileService");
+    //now do what ever initialization is needed
+    usesResource("TFileService");
 
+    triggerResultsT_ = consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("triggerResults"));
 }
 
 
 cutFlowAnalyzer::~cutFlowAnalyzer()
 {
  
-   // do anything here that needs to be done at desctruction time
-   // (e.g. close files, deallocate resources etc.)
+    // do anything here that needs to be done at desctruction time
+    // (e.g. close files, deallocate resources etc.)
 
 }
 
@@ -91,18 +97,20 @@ cutFlowAnalyzer::~cutFlowAnalyzer()
 void
 cutFlowAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-   using namespace edm;
+    edm::Handle<TriggerResults> triggers;
+    iEvent.getByToken(triggerResultsT_, triggers);
 
+    const edm::TriggerNames &triggerNames = iEvent.triggerNames(*triggers);
 
 
 #ifdef THIS_IS_AN_EVENT_EXAMPLE
-   Handle<ExampleData> pIn;
-   iEvent.getByLabel("example",pIn);
+    Handle<ExampleData> pIn;
+    iEvent.getByLabel("example",pIn);
 #endif
    
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
-   ESHandle<SetupData> pSetup;
-   iSetup.get<SetupRecord>().get(pSetup);
+    ESHandle<SetupData> pSetup;
+    iSetup.get<SetupRecord>().get(pSetup);
 #endif
 }
 
@@ -122,11 +130,11 @@ cutFlowAnalyzer::endJob()
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
 cutFlowAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-  //The following says we do not know what parameters are allowed so do no validation
-  // Please change this to state exactly what you do use, even if it is no parameters
-  edm::ParameterSetDescription desc;
-  desc.setUnknown();
-  descriptions.addDefault(desc);
+    //The following says we do not know what parameters are allowed so do no validation
+    // Please change this to state exactly what you do use, even if it is no parameters
+    edm::ParameterSetDescription desc;
+    desc.setUnknown();
+    descriptions.addDefault(desc);
 }
 
 //define this as a plug-in
