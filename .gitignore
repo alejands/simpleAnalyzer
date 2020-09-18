@@ -1,3 +1,4 @@
 *.root
 *.pyc
 *.pdf
+**/__init__.py
