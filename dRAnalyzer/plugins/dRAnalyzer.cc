@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    aa4b/dRAnalyzer
+// Package:    simpleAnalyzer/dRAnalyzer
 // Class:      dRAnalyzer
 //
-/**\class dRAnalyzer dRAnalyzer.cc aa4b/dRAnalyzer/plugins/dRAnalyzer.cc
+/**\class dRAnalyzer dRAnalyzer.cc simpleAnalyzer/dRAnalyzer/plugins/dRAnalyzer.cc
 
  Description: [one line class summary]
 
@@ -16,7 +16,7 @@
 //
 //
 
-#include "aa4b/dRAnalyzer/interface/dRAnalyzer.h"
+#include "simpleAnalyzer/dRAnalyzer/interface/dRAnalyzer.h"
 
 //
 // constructors and destructor

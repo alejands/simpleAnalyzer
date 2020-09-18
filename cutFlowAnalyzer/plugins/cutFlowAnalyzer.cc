@@ -97,7 +97,7 @@ cutFlowAnalyzer::~cutFlowAnalyzer()
 void
 cutFlowAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-    edm::Handle<TriggerResults> triggers;
+    edm::Handle<edm::TriggerResults> triggers;
     iEvent.getByToken(triggerResultsT_, triggers);
 
     const edm::TriggerNames &triggerNames = iEvent.triggerNames(*triggers);

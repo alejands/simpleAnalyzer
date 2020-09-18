@@ -13,7 +13,7 @@ process.source = cms.Source("PoolSource",
     )
 )
 
-process.demo = cms.EDAnalyzer('cutFlowAnalyzer'
+process.demo = cms.EDAnalyzer('cutFlowAnalyzer',
     triggerResults = cms.InputTag("TriggerResults","","HLT")
 )
 
