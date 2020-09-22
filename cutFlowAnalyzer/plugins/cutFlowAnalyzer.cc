@@ -19,6 +19,8 @@
 
 // system include files
 #include <memory>
+#include <iostream>
+#include <string>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -31,6 +33,8 @@
 
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "FWCore/Common/interface/TriggerNames.h"
+#include "FWCore/Common/interface/TriggerResultsByName.h"
+#include "FWCore/Utilities/interface/RegexMatch.h"
 //
 // class declaration
 //
@@ -54,15 +58,18 @@ class cutFlowAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  
         virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
         virtual void endJob() override;
 
+        bool runTriggerSelection(const edm::Event&, const edm::EventSetup&);
+        bool runSingleMuonSelection (const edm::Event&, const edm::EventSetup&);
         // ----------member data ---------------------------
 
         edm::EDGetTokenT<edm::TriggerResults> triggerResultsT_;
+        std::vector<int> passCut;
 };
 
 //
 // constants, enums and typedefs
 //
-
+static const bool debug = true;
 //
 // static data member definitions
 //
@@ -97,11 +104,14 @@ cutFlowAnalyzer::~cutFlowAnalyzer()
 void
 cutFlowAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-    edm::Handle<edm::TriggerResults> triggers;
-    iEvent.getByToken(triggerResultsT_, triggers);
+    // Event Count
+    passCut[0]++;
 
-    const edm::TriggerNames &triggerNames = iEvent.triggerNames(*triggers);
+    // Trigger
+    if ( runTriggerSelection(iEvent, iSetup) ) passCut[1]++;
 
+    // Lepton
+    if ( runSingleMuonSelection(iEvent, iSetup) ) passCut[2]++;
 
 #ifdef THIS_IS_AN_EVENT_EXAMPLE
     Handle<ExampleData> pIn;
@@ -119,12 +129,18 @@ cutFlowAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
 void 
 cutFlowAnalyzer::beginJob()
 {
+    passCut.push_back(0); // total Events
+    passCut.push_back(0); // trigger
+    passCut.push_back(0); // n leptons
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
 cutFlowAnalyzer::endJob() 
 {
+    std::cout << "N total       : " <<  passCut[0] << std::endl;
+    std::cout << "N pass trigger: " <<  passCut[1] << std::endl;
+    std::cout << "N single muon : " <<  passCut[2] << std::endl;
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
@@ -135,6 +151,48 @@ cutFlowAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
     edm::ParameterSetDescription desc;
     desc.setUnknown();
     descriptions.addDefault(desc);
+}
+
+
+bool cutFlowAnalyzer::runTriggerSelection(const edm::Event& iEvent, const edm::EventSetup& iSetup){
+
+    edm::Handle<edm::TriggerResults> triggers;
+    iEvent.getByToken(triggerResultsT_, triggers);
+
+    const edm::TriggerNames &triggerNames = iEvent.triggerNames(*triggers);
+
+    if (debug) {
+        std::cout << "Num triggers: " << triggers->size() << std::endl;
+
+        for (unsigned int iT=0; iT < triggers->size(); iT++){
+            std::cout << " name["<<iT<<"]: "<<triggerNames.triggerName(iT) << std::endl;
+        }
+    }
+
+    std::string singleMuTrigger = "HLT_IsoMu27_v*";
+
+    std::vector< std::vector<std::string>::const_iterator > triggerMatches 
+             = edm::regexMatch(triggerNames.triggerNames(), singleMuTrigger);
+    
+    if (debug) std::cout << "N matches: " << triggerMatches.size() << std::endl; 
+
+    if ( !triggerMatches.empty() ) {
+       for ( auto const &iT : triggerMatches ) {
+            if (debug){
+                std::cout << " Name["<<triggerNames.triggerIndex(*iT)<<"]: "<<*iT<<" -> "
+                      << triggers->accept(triggerNames.triggerIndex(*iT)) << std::endl;
+            }
+            if ( triggers->accept(triggerNames.triggerIndex(*iT)) ) return true;
+        }
+    }
+    else if (debug) std::cout << "No trigger matches for " << singleMuTrigger << std::endl;
+    
+    return false;
+
+}
+
+bool cutFlowAnalyzer::runSingleMuonSelection (const edm::Event& iEvent, const edm::EventSetup& iSetup){
+    return false;
 }
 
 //define this as a plug-in
